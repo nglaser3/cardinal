@@ -58,9 +58,14 @@ getOperationEnum()
 MooseEnum
 getTallyTypeEnum()
 {
-  return MooseEnum("cell mesh none");
+  return MooseEnum("cell mesh fet none");
 }
 
+MooseEnum
+getFETTypeEnum()
+{
+  return MooseEnum("legendre spatial_legendre zernike radial_zernike spherical_harmonics")
+}
 MooseEnum
 getTallyEstimatorEnum()
 {

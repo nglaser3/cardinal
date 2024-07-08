@@ -27,6 +27,7 @@ MooseEnum getBinnedVelocityComponentEnum();
 MooseEnum getNekFieldEnum();
 MooseEnum getOperationEnum();
 MooseEnum getTallyTypeEnum();
+MooseEnum getFETTypeEnum();
 MooseEnum getTallyEstimatorEnum();
 MooseEnum getEigenvalueEnum();
 MooseEnum getRelaxationEnum();
@@ -132,9 +133,18 @@ enum TallyTypeEnum
 {
   cell,
   mesh,
+  fet,
   none
 };
-
+/// Type of FET to construct for the OpenMC model
+enum FETTypeEnum
+{
+  legendre,
+  spatial_legendre,
+  zernike,
+  radial_zernike,
+  spherical_harmonics
+}
 /// Type of estimator to use for OpenMC tallies
 enum TallyEstimatorEnum
 {
