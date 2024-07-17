@@ -20,6 +20,7 @@
 
 #include "OpenMCProblemBase.h"
 #include "CardinalAppTypes.h"
+#include "AddTallyAction.h"
 
 InputParameters
 OpenMCProblemBase::validParams()
@@ -31,8 +32,7 @@ OpenMCProblemBase::validParams()
       "source_strength", "Neutrons/second to normalize the OpenMC tallies; only used for fixed source mode");
   params.addParam<bool>("verbose", false, "Whether to print diagnostic information");
 
-  params.addRequiredParam<MooseEnum>(
-      "tally_type", getTallyTypeEnum(), "Type of tally to use in OpenMC");
+  params.addParam<MooseEnum>("tally_type", getTallyTypeEnum(), "Type of tally to use in OpenMC");
 
   params.addRangeCheckedParam<Real>(
       "scaling",
@@ -85,6 +85,10 @@ OpenMCProblemBase::OpenMCProblemBase(const InputParameters & params)
     _fixed_point_iteration(-1),
     _total_n_particles(0)
 {
+  if (isParamValid("tally_type"))
+    mooseError("The tally system used by OpenMCProblemBase derived classes has been deprecated. "
+               "Please add tallies with the [Tallies] block instead.");
+
   int argc = 1;
   char openmc[] = "openmc";
   char * argv[1] = {openmc};
@@ -107,7 +111,9 @@ OpenMCProblemBase::OpenMCProblemBase(const InputParameters & params)
   {
     case openmc::RunMode::EIGENVALUE:
     {
-      if (_tally_type != tally::none)
+      // Jumping through hoops to see if we're going to add tallies down the line.
+      const auto & tally_actions = getMooseApp().actionWarehouse().getActions<AddTallyAction>();
+      if (tally_actions.size() > 0)
       {
         checkRequiredParam(params, "power", "running in k-eigenvalue mode");
         _power = &getPostprocessorValue("power");
@@ -595,6 +601,22 @@ OpenMCProblemBase::tallyEstimator(tally::TallyEstimatorEnum estimator) const
       return openmc::TallyEstimator::COLLISION;
     case tally::analog:
       return openmc::TallyEstimator::ANALOG;
+    default:
+      mooseError("Unhandled TallyEstimatorEnum!");
+  }
+}
+
+std::string
+OpenMCProblemBase::estimatorToString(openmc::TallyEstimator estimator) const
+{
+  switch (estimator)
+  {
+    case openmc::TallyEstimator::TRACKLENGTH:
+      return "tracklength";
+    case openmc::TallyEstimator::COLLISION:
+      return "collision";
+    case openmc::TallyEstimator::ANALOG:
+      return "analog";
     default:
       mooseError("Unhandled TallyEstimatorEnum!");
   }

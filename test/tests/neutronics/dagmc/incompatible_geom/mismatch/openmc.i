@@ -14,10 +14,15 @@
   parallel_type = replicated
 []
 
+[Tallies]
+  [Mesh]
+    type = MeshTally
+    mesh_template = ../../mesh_tallies/slab.e
+  []
+[]
+
 [Problem]
   type = OpenMCCellAverageProblem
-  tally_type = mesh
-  mesh_template = ../../mesh_tallies/slab.e
 
   temperature_blocks = '1'
   cell_level = 0

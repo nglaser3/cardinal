@@ -27,10 +27,15 @@
   []
 []
 
+[Tallies]
+  [Mesh]
+    type = MeshTally
+    mesh_template = slab.e
+  []
+[]
+
 [Problem]
   type = OpenMCCellAverageProblem
-  tally_type = mesh
-  mesh_template = slab.e
 
   temperature_blocks = '1 2'
   cell_level = 0

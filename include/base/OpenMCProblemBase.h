@@ -97,6 +97,12 @@ public:
   const Real & scaling() const { return _scaling; }
 
   /**
+   * Whether the problem has user defined scaling or not.
+   * @return whether the user has set the problem scaling or not
+   */
+  bool hasScaling() const { return _specified_scaling; }
+
+  /**
    * Convert from a MOOSE-type enum into a valid OpenMC tally score string
    * @param[in] score MOOSE-type enum string
    * @return OpenMC tally score string
@@ -134,6 +140,13 @@ public:
    * @return OpenMC enum
    */
   openmc::TallyEstimator tallyEstimator(tally::TallyEstimatorEnum estimator) const;
+
+  /**
+   * Convert a tally estimator to a string (for output purposes).
+   * @param[in] estimator OpenMC tally estimator enum
+   * @return a string form of the OpenMC tally estimator enum
+   */
+  std::string estimatorToString(openmc::TallyEstimator estimator) const;
 
   /// Run a k-eigenvalue OpenMC simulation
   void externalSolve() override;

@@ -1,0 +1,41 @@
+[Tests]
+  [multi_global_estimator]
+    type = Exodiff
+    input = multi_estimator.i
+    exodiff = multi_estimator_out.e
+    requirement = "The system shall correctly normalize local tallies with different estimators using multiple global tallies."
+    required_objects = 'OpenMCCellAverageProblem'
+  []
+  [multiple_tallies]
+    type = Exodiff
+    input = multi.i
+    exodiff = multi_out.e
+    requirement = "The system shall correctly apply and normalize two different local tallies with different scores. "
+                  "The gold file was generated using an input that had a single tally with multiple scores."
+    required_objects = 'OpenMCCellAverageProblem'
+  []
+  [duplicate_scores]
+    type = RunException
+    input = multi.i
+    cli_args = 'Tallies/Cell_2/tally_score="flux kappa_fission"'
+    expect_err = "You have added 2 tallies which score kappa-fission!"
+    requirement = "The system shall error if the user provides multiple tallies with overlapping scores."
+    required_objects = 'OpenMCCellAverageProblem'
+  []
+  [multi_no_norm]
+    type = RunException
+    input = multi.i
+    cli_args = 'Tallies/Cell_1/tally_score="heating"'
+    expect_err = "The local tallies added in the \[Tallies\] block do not contain the requested heating score"
+    requirement = "The system shall error if more than one tally is provided and the requested heating score is in "
+                  "none of the tallies."
+    required_objects = 'OpenMCCellAverageProblem'
+  []
+  [multiple_different_tallies]
+    type = Exodiff
+    input = multi_diff.i
+    exodiff = multi_diff_out.e
+    requirement = "The system shall allow calculations with multiple different tallies."
+    required_objects = 'OpenMCCellAverageProblem'
+  []
+[]

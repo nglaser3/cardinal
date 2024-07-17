@@ -12,13 +12,18 @@ height = 6.343                           # height of the full core (m)
   allow_renumbering = false
 []
 
+[Tallies]
+  [Mesh]
+    type = MeshTally
+    mesh_template = solid_mesh_in.e
+  []
+[]
+
 [Problem]
   type = OpenMCCellAverageProblem
   power = 1000.0
   scaling = 100.0
   temperature_blocks = '1 2'
-  tally_type = mesh
-  mesh_template = solid_mesh_in.e
   cell_level = 1
 
   symmetry_mapper = sym

@@ -7,10 +7,15 @@
   allow_renumbering = false
 []
 
+[Tallies]
+  [Mesh]
+    type = MeshTally
+  []
+[]
+
 [Problem]
   type = OpenMCCellAverageProblem
   verbose = true
-  tally_type = mesh
   check_tally_sum = false
   power = 100.0
 []

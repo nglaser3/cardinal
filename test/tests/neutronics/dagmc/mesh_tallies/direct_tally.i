@@ -42,10 +42,15 @@ dT = 50.0
   []
 []
 
+[Tallies]
+  [Mesh]
+    type = MeshTally
+  []
+[]
+
 [Problem]
   type = OpenMCCellAverageProblem
   verbose = true
-  tally_type = mesh
 
   temperature_blocks = '1 2'
   cell_level = 0
