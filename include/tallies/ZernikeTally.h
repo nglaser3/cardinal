@@ -20,3 +20,27 @@
 
 #include "TallyBase.h"
 #include "OpenMCCellAverageProblem.h"
+#include "openmc/tallies/filter_sptl_legendre.h"
+#include "openmc/tallies/filter_zernike.h"
+#include "CardinalEnums.h"
+
+
+class ZernikeTally : public TallyBase
+{
+    public:
+        static InputParameters validParams();
+
+        ZernikeTally(const InputParameters & parameters)
+
+        virtual std::pair<unsigned int, openmc::Filter *> spatialFilter() override;
+
+        virtual void resetTally() override;
+
+    protected:
+        LegendreAxis _axis;
+        unsigned int _zernike_order;
+        unsigned int _legendre_order;
+        Point _centroid;
+        Real _radius;
+        Real _minmax;
+}

@@ -37,6 +37,7 @@ MooseEnum getSingleTallyScoreEnum();
 MooseEnum getEnergyGroupsEnum();
 MooseEnum getNekMeshEnum();
 MooseEnum getFilterTypeEnum();
+MooseEnum getFilterAxisEnum();
 
 namespace nek_mesh
 {

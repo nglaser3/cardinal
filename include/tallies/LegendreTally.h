@@ -20,3 +20,20 @@
 
 #include "TallyBase.h"
 #include "OpenMCCellAverageProblem.h"
+
+class LegendreTally : public TallyBase
+{
+    public:
+        static InputParameters validParams();
+
+        LegendreTally(const InputParameters & params)
+
+        virtual std::pair<unsigned int, openmc::Filter *> spatialFilter() override;
+
+        virtual void resetTally() override;
+
+    protected:
+        std::vector<unsigned int> _orders;
+        Point _min;
+        Point _max;
+}

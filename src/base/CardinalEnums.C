@@ -122,3 +122,9 @@ getFilterTypeEnum()
 {
   return MooseEnum("cell material universe mesh none", "none");
 }
+
+MooseEnum
+getFilterAxisEnum()
+{
+  return MooseEnum("x y z");
+}
