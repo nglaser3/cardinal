@@ -37,12 +37,12 @@ ZernikeTally::validParams()
     params.addRequiredParam<unsigned int>("legendre_order",
                             "The order for the Legendre expansion.")
     params.addRequiredParam<Point>("centroid",
-                            "The centroid (x0, y0) for the expansion.");
+                            "The centroid (x0, y0, z0) for the expansion.");
     params.addRequiredParam<Real>("radius",
                             "The radius for the Zernike expansion.");
     params.addRequiredParam<std::vector<Real>>("legendre_minmax",
-                            "The lower and upper bounds (min, max) for "
-                            "the Legendre expansion.");
+                            "The radius for the Legendre Expansion"
+                            "centered about z0.");
     return params;
 }
 
@@ -59,10 +59,10 @@ ZernikeTally::ZernikeTally(const InputParameters & parameters)
      * OpenMC Zernike filters currently only support expansion in the xy plane.
      * The user provided axis must be z, otherwise ZernikeTally throws an error.
      */
-    if (_axis != LegendreAxis::z)
+    if (_axis != openmc::LegendreAxis::z)
     {
         paramError("normal_axis",
-            "OpenMC Zernike filters currently only support expansion in the xy plane, "
+            "Zernike filters currently only support expansion in the xy plane,"
             "and so the normal_axis must be set to z.");
     }
     
@@ -78,6 +78,82 @@ ZernikeTally::ZernikeTally(const InputParameters & parameters)
     }
 
     return;
+}
+
+void 
+ZernikeTally::initializeTally()
+{
+    // Clear cached results.
+  _local_sum_tally.clear();
+  _local_sum_tally.resize(_tally_score.size(), 0.0);
+  _local_mean_tally.clear();
+  _local_mean_tally.resize(_tally_score.size(), 0.0);
+
+  _current_tally.resize(_tally_score.size());
+  _current_raw_tally.resize(_tally_score.size());
+  _current_raw_tally_rel_error.resize(_tally_score.size());
+  _current_raw_tally_std_dev.resize(_tally_score.size());
+  _previous_tally.resize(_tally_score.size());
+
+  auto [index, spatial_filters] = spatialZernikeFilter();
+  _filter_index = index;
+
+  std::vector<openmc::Filter *> filters;
+  for (auto & filter : _ext_filters)
+    filters.push_back(filter->getWrappedFilter());
+  /**
+   * We add the three spatial legendre filters last 
+   * to minimize the number of cache misses during 
+   * the OpenMC -> Cardinal transfer.
+   */
+  for (auto & filter : spatial_filters)
+  {
+    filters.push_back(filter);
+  }
+
+  // Create the tally, assign the required filters and apply the triggers.
+  _local_tally_index = openmc::model::tallies.size();
+  _local_tally = openmc::Tally::create();
+  _local_tally->set_scores(_tally_score);
+  _local_tally->estimator_ = _estimator;
+  _local_tally->set_filters(filters);
+  applyTriggersToLocalTally(_local_tally);
+}
+
+void
+ZernikeTally::resetTally()
+{
+  // Erase the tally.
+  openmc::model::tallies.erase(openmc::model::tallies.begin() + _local_tally_index);
+
+  for (int i = 0; i < 2; i++)
+  {
+    openmc::model::tally_filters.erase(openmc::model::tally_filters.begin() + _filter_index + i);
+  };
+}
+
+std::pair<unsigned, std::vector<openmc::Filter *>>
+ZernikeTally::spatialZernikeFilter()
+{
+    std::vector<openmc::Filter *> filters;
+
+    filters.push_back(
+        dynamic_cast<openmc::SpatialLegendreFilter *>(openmc::Filter::create("spatiallegendre"))
+    );
+    filters.push_back(
+        dynamic_cast<openmc::ZernikeFilter *>(openmc::Filter::create("zernike"))
+    );
+
+    filters[0]->set_order(_legendre_order);
+    filters[0]->set_axis(openmc::LegendreAxis::z);
+    filters[0]->set_minmax(_centroid(2)-_minmax, _centroid(2)+_minmax);
+    
+    filters[1]->set_order(_zernike_order);
+    filters[1]->set_x(_centroid(0));
+    filters[1]->set_y(_centroid(1));
+    filters[1]->set_r(_radius);
+
+    return std::make_pair(openmc::model::tally_filters.size() - 1, filters);
 }
 
 #endif

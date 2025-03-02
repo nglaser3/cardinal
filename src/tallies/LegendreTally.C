@@ -114,7 +114,6 @@ std::pair<unsigned, std::vector<openmc::Filter *>>
 LegendreTally::spatialLegendreFilter()
 {
     std::vector<openmc::SpatialLegendreFilter *> filters;
-    std::vector<unsigned> ids;
 
     for (int i = 0; i < 3; i++)
     {

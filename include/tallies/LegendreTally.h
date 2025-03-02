@@ -31,7 +31,7 @@ class LegendreTally : public TallyBase
 
         virtual void initializeTally() override;
 
-        virtual void TallyBase::resetTally() override;
+        virtual void resetTally() override;
 
         /**
          * spatialFilter is marked as pure virtual, so must be overriden
@@ -45,7 +45,7 @@ class LegendreTally : public TallyBase
     protected:
         std::pair<unsigned, std::vector<openmc::Filter *>> spatialLegendreFilter();
 
-        template <typename T> 
+        static template <typename T> 
         void setLegendreParams(openmc::SpatialLegendreFilter * filter);
 
         std::vector<unsigned int> _orders;

@@ -19,6 +19,7 @@
 #pragma once
 
 #include "TallyBase.h"
+#include "LegendreTally.h"
 #include "OpenMCCellAverageProblem.h"
 #include "openmc/tallies/filter_sptl_legendre.h"
 #include "openmc/tallies/filter_zernike.h"
@@ -32,12 +33,22 @@ class ZernikeTally : public TallyBase
 
         ZernikeTally(const InputParameters & parameters)
 
-        virtual std::pair<unsigned int, openmc::Filter *> spatialFilter() override;
+        virtual void initializeTally() override;
 
         virtual void resetTally() override;
 
+        /**
+         * spatialFilter is marked as pure virtual, so must be overriden
+         * return 0 and null ptr just to satisfy override
+         */
+        virtual std::pair<unsigned int, openmc::Filter *> spatialFilter() override
+        {return std::make_pair(0, nullptr)};
+
     protected:
-        LegendreAxis _axis;
+        std::pair<unsigned, std::vector<openmc::Filter *>>
+        spatialZernikeFilter();
+
+        openmc::LegendreAxis _axis;
         unsigned int _zernike_order;
         unsigned int _legendre_order;
         Point _centroid;
