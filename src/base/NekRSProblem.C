@@ -99,24 +99,24 @@ NekRSProblem::NekRSProblem(const InputParameters & params)
   int start = _usrwrk_indices.size();
   if (_boundary)
   {
-    indices.flux = start++ * nekrs::scalarFieldOffset();
-    _usrwrk_indices.push_back("flux");
+    indices.flux = start++ * nekrs::fieldOffset();
+    _usrwrk_indices.push_back("heat flux");
   }
 
   if (_volume && _has_heat_source)
   {
-    indices.heat_source = start++ * nekrs::scalarFieldOffset();
-    _usrwrk_indices.push_back("heat_source");
+    indices.heat_source = start++ * nekrs::fieldOffset();
+    _usrwrk_indices.push_back("heat source");
   }
 
   if (nekrs::hasBlendingSolver())
   {
-    indices.mesh_velocity_x = start++ * nekrs::scalarFieldOffset();
-    indices.mesh_velocity_y = start++ * nekrs::scalarFieldOffset();
-    indices.mesh_velocity_z = start++ * nekrs::scalarFieldOffset();
-    _usrwrk_indices.push_back("mesh_velocity_x");
-    _usrwrk_indices.push_back("mesh_velocity_y");
-    _usrwrk_indices.push_back("mesh_velocity_z");
+    indices.mesh_velocity_x = start++ * nekrs::fieldOffset();
+    indices.mesh_velocity_y = start++ * nekrs::fieldOffset();
+    indices.mesh_velocity_z = start++ * nekrs::fieldOffset();
+    _usrwrk_indices.push_back("mesh velocity x");
+    _usrwrk_indices.push_back("mesh velocity y");
+    _usrwrk_indices.push_back("mesh velocity z");
   }
 
   _minimum_scratch_size_for_coupling = _usrwrk_indices.size() - _first_reserved_usrwrk_slot;
@@ -511,13 +511,13 @@ NekRSProblem::sendVolumeDeformationToNek()
     if (nekrs::commRank() != _nek_mesh->volumeCoupling().processor_id(e))
       continue;
 
-    mapVolumeDataToNekVolume(e, _disp_x_var, 1.0 / _L_ref, &_displacement_x);
+    mapVolumeDataToNekVolume(e, _disp_x_var, 1.0 / nekrs::referenceLength(), &_displacement_x);
     writeVolumeSolution(e, field::x_displacement, _displacement_x, &(_nek_mesh->nek_initial_x()));
 
-    mapVolumeDataToNekVolume(e, _disp_y_var, 1.0 / _L_ref, &_displacement_y);
+    mapVolumeDataToNekVolume(e, _disp_y_var, 1.0 / nekrs::referenceLength(), &_displacement_y);
     writeVolumeSolution(e, field::y_displacement, _displacement_y, &(_nek_mesh->nek_initial_y()));
 
-    mapVolumeDataToNekVolume(e, _disp_z_var, 1.0 / _L_ref, &_displacement_z);
+    mapVolumeDataToNekVolume(e, _disp_z_var, 1.0 / nekrs::referenceLength(), &_displacement_z);
     writeVolumeSolution(e, field::z_displacement, _displacement_z, &(_nek_mesh->nek_initial_z()));
   }
 
@@ -836,7 +836,8 @@ NekRSProblem::calculateMeshVelocity(int e, const field::NekWriteEnum & field)
   }
 
   for (int i=0; i <len; i++)
-    _mesh_velocity_elem[i] = (displacement[i] - prev_disp[(e*len) + i])/dt/_U_ref;
+    _mesh_velocity_elem[i] =
+        (displacement[i] - prev_disp[(e * len) + i]) / dt / nekrs::referenceVelocity();
 
   _nek_mesh->updateDisplacement(e, displacement, disp_field);
 }

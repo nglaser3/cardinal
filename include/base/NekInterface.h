@@ -70,10 +70,23 @@ void checkFieldValidity(const field::NekFieldEnum & field);
 void setAbsoluteTol(double tol);
 
 /**
+ * Inform backend if dimensionalization should be performed
+ * @param[in] n if dimensionalize should be performed
+ */
+void nondimensional(const bool n);
+
+/**
  * Set the relative tolerance for checking energy conservation in data transfers to Nek
  * @param[in] tol tolerance
  */
 void setRelativeTol(double tol);
+
+/**
+ * Get the reference additive scale for dimensionalizing a quantity
+ * @param[in] field field to fetch scale for
+ * @return additive scale
+ */
+Real referenceAdditiveScale(const field::NekFieldEnum & field);
 
 /**
  * Nek's runtime statistics are formed by collecting a timer of both the initialization
@@ -201,6 +214,12 @@ int scalarFieldOffset();
  * @return velocity field offset
  */
 int velocityFieldOffset();
+
+/**
+ * Offset increment to use for generic slice indexing
+ * @return field offset
+ */
+int fieldOffset();
 
 /**
  * Get the "entire" NekRS mesh. For cases with a temperature scalar, this returns
@@ -713,30 +732,30 @@ struct usrwrkIndices
   int boundary_scalar03;
 };
 
-/// Characteristic scales assumed in nekRS if using a non-dimensional solution
+/**
+ * Characteristic scales assumed in nekRS if using a non-dimensional solution; initial values
+ * are applied, which will be overridden by the DimensionalizeAction in Cardinal.
+ */
 struct characteristicScales
 {
-  double U_ref;
-
-  double T_ref;
-
-  double dT_ref;
-
-  double L_ref;
-
-  double A_ref;
-
-  double V_ref;
-
-  double rho_ref;
-
-  double Cp_ref;
-
-  double flux_ref;
-
-  double source_ref;
-
-  bool nondimensional_T;
+  double U_ref = 1;
+  double T_ref = 0;
+  double dT_ref = 1;
+  double P_ref = 1;
+  double L_ref = 1;
+  double A_ref = 1;
+  double V_ref = 1;
+  double rho_ref = 1;
+  double Cp_ref = 1;
+  double flux_ref = 1;
+  double source_ref = 1;
+  double t_ref = 1;
+  double s01_ref = 0;
+  double ds01_ref = 1;
+  double s02_ref = 0;
+  double ds02_ref = 1;
+  double s03_ref = 0;
+  double ds03_ref = 1;
 };
 
 /**
@@ -753,35 +772,49 @@ double (*solutionPointer(const field::NekFieldEnum & field))(int);
 void (*solutionPointer(const field::NekWriteEnum & field))(int, dfloat);
 
 /**
- * \brief Get the scalar01 solution at given GLL index
- *
+ * Get the scalar01 solution at given GLL index
  * @param[in] id GLL index
  * @return scalar01 value at index
  */
 double scalar01(const int id);
 
 /**
- * \brief Get the scalar02 solution at given GLL index
- *
+ * Get the scalar02 solution at given GLL index
  * @param[in] id GLL index
  * @return scalar02 value at index
  */
 double scalar02(const int id);
 
 /**
- * \brief Get the scalar03 solution at given GLL index
- *
+ * Get the scalar03 solution at given GLL index
  * @param[in] id GLL index
  * @return scalar03 value at index
  */
 double scalar03(const int id);
 
 /**
- * \brief Get the temperature solution at given GLL index
- *
- * Because nekRS stores all the passive scalars together in one flat array, this routine
- * simply indices into the entire passive scalar solution. In order to get temperature, you should
- * only index up to nrs->cds->fieldOffset.
+ * Get the usrwrk zeroth slice at given GLL index
+ * @param[in] id GLL index
+ * @return zeroth slice of usrwrk value at index
+ */
+double usrwrk00(const int id);
+
+/**
+ * Get the usrwrk first slice at given GLL index
+ * @param[in] id GLL index
+ * @return first slice of usrwrk value at index
+ */
+double usrwrk01(const int id);
+
+/**
+ * Get the usrwrk second slice at given GLL index
+ * @param[in] id GLL index
+ * @return second slice of usrwrk value at index
+ */
+double usrwrk02(const int id);
+
+/**
+ * Get the temperature solution at given GLL index
  * @param[in] id GLL index
  * @return temperature value at index
  */
@@ -894,12 +927,18 @@ void z_displacement(const int id, const dfloat value);
  * @param[in] rho_ref reference density
  * @param[in] Cp_ref reference heat capacity
  */
-void initializeDimensionalScales(const double U_ref,
-                                 const double T_ref,
-                                 const double dT_ref,
-                                 const double L_ref,
-                                 const double rho_ref,
-                                 const double Cp_ref);
+void initializeDimensionalScales(const double U,
+                                 const double T,
+                                 const double dT,
+                                 const double L,
+                                 const double rho,
+                                 const double Cp,
+                                 const double s01,
+                                 const double ds01,
+                                 const double s02,
+                                 const double ds02,
+                                 const double s03,
+                                 const double ds03);
 
 /**
  * \brief Dimensionalize a field by multiplying the nondimensional form by the reference
@@ -933,6 +972,24 @@ double referenceSource();
  * @return reference length scale
  */
 double referenceLength();
+
+/**
+ * Get the reference pressure scale
+ * @return reference pressure scale
+ */
+double referencePressure();
+
+/**
+ * Get the reference time scale
+ * @return reference time scale
+ */
+double referenceTime();
+
+/**
+ * Get the reference velocity scale
+ * @return reference velocity scale
+ */
+double referenceVelocity();
 
 /**
  * Get the reference area scale

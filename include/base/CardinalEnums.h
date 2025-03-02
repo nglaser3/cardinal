@@ -104,7 +104,10 @@ enum NekFieldEnum
   scalar01,
   scalar02,
   scalar03,
-  unity
+  unity,
+  usrwrk00,
+  usrwrk01,
+  usrwrk02
 };
 
 /// Enumeration of possible fields to write in nekRS
