@@ -748,6 +748,18 @@ protected:
    * @return whether OpenMC reported an error
    */
   bool findCell(const Point & point);
+  
+  /**
+   * Makes a FunctionSeries for LegendreTally or ZernikeTally
+   * @param[in] name name of the function to create
+   * @param[in] series_type type of function to create: "Cartesian" or "CylindricalDuo"
+   * @param[in] ords orders of the expansion
+   * @param[in] bounds the bounds of the expansion
+   * @return pointer to the function, used to change mutable coefficients
+   */
+  FunctionSeries* makeFunctionSeries(std::string name, std::string series_type,
+                                    std::vector<unsigned int> orders,
+                                    std::vector<Real> bounds)
 
   /**
    * Checks that the contained material cells exactly match between a reference obtained

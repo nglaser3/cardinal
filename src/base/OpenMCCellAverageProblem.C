@@ -21,6 +21,7 @@
 #include "OpenMCCellAverageProblem.h"
 #include "DelimitedFileReader.h"
 #include "TallyBase.h"
+#include "FunctionSeries.h"
 #include "CellTally.h"
 #include "AddTallyAction.h"
 #include "OpenMCVolumeCalculation.h"
@@ -2134,6 +2135,30 @@ OpenMCCellAverageProblem::findCell(const Point & point)
 
   _particle.r() = {pt(0), pt(1), pt(2)};
   return !openmc::exhaustive_find_cell(_particle);
+}
+
+FunctionSeries*
+OpenMCCellAverageProblem::makeFunctionSeries(std::string name, std::string series_type,
+                                             std::vector<unsigned int> orders, std::vector<Real> bounds)
+{
+  InputParameters params = _factory.getValidParams("FunctionSeries");
+
+  if (series_type == "Cartesian")
+  {
+    _params.set<MooseEnum>("series_type") = "Cartesian";
+    for (std::string dim: std::vector{"x","y","x"})
+    {
+      _params.set<MooseEnum>(dim, "Legendre")
+    }
+    _params.set<std::vector<unsigned int>("orders") = orders;
+    _params.set<std::vector<Real>("physical_bounds") = bounds;
+  }
+
+  _params.set<MooseEnum>("expansion_type") = "orthonormal";
+  
+  addFunction("FunctionSeries", name, _params);
+
+  return *getFunction(name);
 }
 
 void
