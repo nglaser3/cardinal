@@ -2146,7 +2146,7 @@ OpenMCCellAverageProblem::makeFunctionSeries(std::string name, std::string serie
   if (series_type == "Cartesian")
   {
     _params.set<MooseEnum>("series_type") = "Cartesian";
-    for (std::string dim: std::vector{"x","y","x"})
+    for (std::string dim: std::vector{"x","y","z"})
     {
       _params.set<MooseEnum>(dim, "Legendre")
     }
