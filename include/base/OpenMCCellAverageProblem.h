@@ -25,6 +25,9 @@
 #include "TallyBase.h"
 #include "FilterBase.h"
 
+/// Functional Expansion include
+#include "FunctionSeries.h"
+
 #ifdef ENABLE_DAGMC
 #include "MoabSkinner.h"
 #include "DagMC.hpp"
