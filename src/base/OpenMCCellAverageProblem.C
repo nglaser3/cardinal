@@ -2141,24 +2141,24 @@ FunctionSeries*
 OpenMCCellAverageProblem::makeFunctionSeries(std::string name, std::string series_type,
                                              std::vector<unsigned int> orders, std::vector<Real> bounds)
 {
-  InputParameters params = _factory.getValidParams("FunctionSeries");
+  InputParameters _params = _factory.getValidParams("FunctionSeries");
 
   if (series_type == "Cartesian")
   {
     _params.set<MooseEnum>("series_type") = "Cartesian";
     for (std::string dim: std::vector{"x","y","z"})
     {
-      _params.set<MooseEnum>(dim, "Legendre")
+      _params.set<MooseEnum>(dim) = "Legendre";
     }
-    _params.set<std::vector<unsigned int>("orders") = orders;
-    _params.set<std::vector<Real>("physical_bounds") = bounds;
+    _params.set<std::vector<unsigned int>>("orders") = orders;
+    _params.set<std::vector<Real>>("physical_bounds") = bounds;
   }
 
   _params.set<MooseEnum>("expansion_type") = "orthonormal";
   
   addFunction("FunctionSeries", name, _params);
 
-  return *getFunction(name);
+  return dynamic_cast<FunctionSeries*>(&getFunction(name));
 }
 
 void
