@@ -19,6 +19,8 @@
 #pragma once
 
 #include "TallyBase.h"
+#include "OpenMCCellAverageProblem.h"
+#include "FunctionSeries.h"
 
 class FETallyBase : public TallyBase
 {
@@ -26,24 +28,26 @@ class FETallyBase : public TallyBase
 
         static InputParameters validParams();
 
-        FETallyBase(const InputOParameters & parameters);
+        FETallyBase(const InputParameters & parameters);
 
         virtual void initializeTally() override;
 
         virtual void resetTally() override;
 
+        virtual void computeSumAndMean();
+
         virtual std::pair<unsigned int, openmc::Filter *> spatialFilter() override
         {return std::make_pair(0, nullptr);};
 
-        virtual std::pair<unsigned int, std::vector<openmc::Filter *>> spatialFilters() = 0;  
+        virtual std::pair<long unsigned int, std::vector<openmc::Filter *>> spatialFilters() = 0;  
 
     protected:
 
         virtual Real storeResultsInner(const std::vector<unsigned int> & var_numbers,
-            unsigned int local_score,
-            unsigned int global_score,
-            std::vector<xt::xtensor<double, 1>> tally_vals,
-            bool norm_by_src_rate) override;
+                                       unsigned int local_score,
+                                       unsigned int global_score,
+                                       std::vector<xt::xtensor<double, 1>> tally_vals,
+                                       bool norm_by_src_rate) override;
 
         void normalizeCoefficients(unsigned int score_id, Real factor);
 
@@ -52,21 +56,19 @@ class FETallyBase : public TallyBase
 
         void save(unsigned score_id, size_t index, Real coefficient);
 
-        virtual FunctionSeries* getFunctionSeries(std::string name) = 0;
+        virtual FunctionSeries* getFunctionSeries(std::string name){return nullptr;};
 
-        static openmc::SpatialLegendreFilter* makeLegendreFilter(Real min,
-                                                Real max, unsigned order,
-                                                openmc::LegendreAxis axis);
+        virtual int getNumOrders(){return 0;};
+        virtual Real getVolume() = 0;
 
-        virtual void verifyOrders() = 0;
         std::vector<unsigned int> _orders;
 
         size_t _size;
 
         std::vector<FunctionSeries*> _functions;
         std::vector<std::vector<Real>> _coefficients;
+        std::vector<Real> _first_moments;
 
         std::string _function_suffix;
 
 };
-

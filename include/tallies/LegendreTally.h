@@ -18,62 +18,32 @@
 
 #pragma once
 
-#include "TallyBase.h"
-#include "OpenMCCellAverageProblem.h"
+#include "FETallyBase.h"
 #include "openmc/tallies/filter_sptl_legendre.h"
-#include "FunctionSeries.h"
 
-class LegendreTally : public TallyBase
+class LegendreTally : public FETallyBase
 {
-    public:
-        static InputParameters validParams();
+public:
 
-        LegendreTally(const InputParameters & params);
+    static InputParameters validParams();
 
-        virtual void initializeTally() override;
+    LegendreTally(const InputParameters & parameters);
 
-        virtual void resetTally() override;
+    virtual std::pair<long unsigned int, std::vector<openmc::Filter *>> 
+    spatialFilters() override;
 
-        virtual void computeSumAndMean() override;
+protected:
 
-        /**
-         * spatialFilter is marked as pure virtual, so must be overriden
-         * return 0 and null ptr just to satisfy override
-         */
-        virtual std::pair<unsigned int, openmc::Filter *> spatialFilter() override
-        {return std::make_pair(0, nullptr);};
+    virtual void setCoefficients(std::vector<xt::xtensor<double, 1>> tally_vals,
+                                 unsigned int score_id) override;
 
-    protected:
-        virtual Real storeResultsInner(const std::vector<unsigned int> & var_numbers,
-                                       unsigned int local_score,
-                                       unsigned int global_score,
-                                       std::vector<xt::xtensor<double, 1>> tally_vals,
-                                       bool norm_by_src_rate) override;
+    virtual FunctionSeries* getFunctionSeries(std::string name) override;
 
+    virtual int getNumOrders(){return 3;};
 
-        void normalizeCoefficients(unsigned int score_id, Real factor);
-        
-        void setCoefficients(std::vector<xt::xtensor<double, 1>> tally_vals, unsigned int score_id);
+    virtual Real getVolume() override {return 8.;};
 
-        std::pair<unsigned int, std::vector<openmc::SpatialLegendreFilter *>> spatialLegendreFilter();
+    Point _min;
 
-        void setLegendreParams(openmc::LegendreAxis axis,
-                               openmc::SpatialLegendreFilter * filter);
-
-        void save(unsigned score_id, size_t index, Real coefficient);
-
-        FunctionSeries* getFunctionSeries(std::string name);
-        
-        std::vector<unsigned int> _orders;
-        Point _min;
-        Point _max;
-
-        size_t _size;
-
-        std::vector<FunctionSeries*> _functions;
-        std::vector<std::vector<Real>> _coefficients;
-
-        std::vector<Real> _first_moments;
-
-       std::string _function_suffix;
+    Point _max;
 };
