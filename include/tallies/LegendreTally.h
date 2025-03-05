@@ -28,7 +28,7 @@ class LegendreTally : public TallyBase
     public:
         static InputParameters validParams();
 
-        LegendreTally(const InputParameters & params)
+        LegendreTally(const InputParameters & params);
 
         virtual void initializeTally() override;
 
@@ -41,24 +41,24 @@ class LegendreTally : public TallyBase
          * return 0 and null ptr just to satisfy override
          */
         virtual std::pair<unsigned int, openmc::Filter *> spatialFilter() override
-        {return std::make_pair(0, nullptr)};
+        {return std::make_pair(0, nullptr);};
 
     protected:
         virtual Real storeResultsInner(const std::vector<unsigned int> & var_numbers,
                                        unsigned int local_score,
                                        unsigned int global_score,
                                        std::vector<xt::xtensor<double, 1>> tally_vals,
-                                       bool norm_by_src_rate = true) override;
+                                       bool norm_by_src_rate) override;
 
 
         void normalizeCoefficients(unsigned int score_id, Real factor);
         
-        Real setCoefficients(std::vector<xt::xtensor<double, 1>> tally_vals, unsigned int score_id);
+        void setCoefficients(std::vector<xt::xtensor<double, 1>> tally_vals, unsigned int score_id);
 
-        std::pair<unsigned, std::vector<openmc::Filter *>> spatialLegendreFilter();
+        std::pair<unsigned int, std::vector<openmc::SpatialLegendreFilter *>> spatialLegendreFilter();
 
-        static template <typename T> 
-        void setLegendreParams(openmc::SpatialLegendreFilter * filter);
+        void setLegendreParams(openmc::LegendreAxis axis,
+                               openmc::SpatialLegendreFilter * filter);
 
         void save(unsigned score_id, size_t index, Real coefficient);
 
@@ -68,10 +68,12 @@ class LegendreTally : public TallyBase
         Point _min;
         Point _max;
 
-        std:vector<FunctionSeries*> _functions;
+        size_t _size;
+
+        std::vector<FunctionSeries*> _functions;
         std::vector<std::vector<Real>> _coefficients;
 
-        Real _first_moment;
+        std::vector<Real> _first_moments;
 
-
-}
+       std::string _function_suffix;
+};

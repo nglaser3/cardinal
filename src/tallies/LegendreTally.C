@@ -21,15 +21,14 @@
 #include "LegendreTally.h"
 
 registerMooseObject("CardinalApp", LegendreTally);
-using axis = openmc::LegendreAxis;
 
 InputParameters
 LegendreTally::validParams()
 {
-    auto params = TallyBase::validParams()
+    auto params = TallyBase::validParams();
     params.addClassDescription("A class which implements Legendre functional "
                             "expansion tallies.");
-    params.addRequiredParam<std:vector<std::vector<unsigned>>>("orders",
+    params.addRequiredParam<std::vector<unsigned>>("orders",
                             "The orders (x, y, z) for the Legendre expansions "
                             "in each dimension.");
     params.addRequiredParam<Point>("minimum",
@@ -39,7 +38,6 @@ LegendreTally::validParams()
     params.addParam<std::string>("function_suffix","_function",
                             "The suffix to append to the score as the name of the"
                             "function object holding the Legendre expansion.");
-    params.set("name", std::vector<std::string>(0));
     return params;
 }
 
@@ -48,18 +46,32 @@ LegendreTally::LegendreTally(const InputParameters & parameters)
   _orders(getParam<std::vector<unsigned>>("orders")),
   _min(getParam<Point>("minimum")),
   _max(getParam<Point>("maximum")),
-  _name(getParam<std::string>("function_suffix"))
+  _function_suffix(getParam<std::string>("function_suffix"))
 {
+
+    //overriding auxvariable names, don't want to create any
+    if (isParamValid("name"))
+    {
+      mooseWarning("LegendreTally does not have any ElementalAuxVariables " 
+                   "associated with it! LegendreTally creates functions, " 
+                   "the names of which are controllable by \"function_suffix\". "
+                   "Clearing \"name\" parameter...");
+    }
+    _tally_name.clear();
+
     mooseAssert(_orders.size() == 3, 
                 "Cardinal only supports 3-D, and so each set of "
                 "orders must contain 3 integers!");
 
+    _functions.resize(_tally_score.size());
+    _coefficients.resize(_tally_score.size());
+
     size_t _size = _orders[0] * _orders[1] * _orders[2];
-    for (auto score : _tally_score)
+    for (int index; index < _tally_score.size(); ++index)
     {
-      _functions.push_back(this->getFunctionSeries(score + _name));
-      //initializing coefficients for functions, each with shape x * y * z
-      _coefficients.push_back(std::vector<Real>(_size));
+      _functions.at(index) = this->getFunctionSeries(_tally_score.at(index) + _function_suffix);
+      //initializing coefficients for functions, each with shape x * y * z (orders)
+      _coefficients.at(index) = std::vector<Real>(_size);
     }
     
     /**
@@ -75,7 +87,7 @@ LegendreTally::LegendreTally(const InputParameters & parameters)
     else
       _estimator = openmc::TallyEstimator::COLLISION;
 
-    _first_moment = 0.;
+    _first_moments.resize(_tally_score.size());
 
 }
 
@@ -94,8 +106,7 @@ LegendreTally::initializeTally()
   _current_raw_tally_std_dev.resize(_tally_score.size());
   _previous_tally.resize(_tally_score.size());
 
-  auto [index, spatial_filters] = spatialLegendreFilter();
-  _filter_index = index;
+  auto [_filter_index, spatial_filters] = spatialLegendreFilter();
 
   std::vector<openmc::Filter *> filters;
   for (auto & filter : _ext_filters)
@@ -136,8 +147,8 @@ LegendreTally::computeSumAndMean()
 {
   for (unsigned int score = 0; score < _tally_score.size(); ++score)
   {
-    _local_sum_tally[score] = _first_moment;
-    _local_mean_tally[score] = _first_moment / 8; //2 in each direction?
+    _local_sum_tally[score] = _first_moments.at(score);
+    _local_mean_tally[score] = _first_moments.at(score) / 8; //2 in each direction?
   }
 }
 
@@ -146,7 +157,7 @@ LegendreTally::storeResultsInner(const std::vector<unsigned int> & var_numbers,
                                  unsigned int local_score,
                                  unsigned int global_score,
                                  std::vector<xt::xtensor<double, 1>> tally_vals,
-                                 bool norm_by_src_rate = true)
+                                 bool norm_by_src_rate)
 {
   /**
    * TODO: local_score to the index of the function
@@ -154,56 +165,56 @@ LegendreTally::storeResultsInner(const std::vector<unsigned int> & var_numbers,
    * DONE: Don't care about var_numbers
    * 
    */
-    _first_moment = this->setCoefficients(tally_vals, local_score);
-    
+    unsigned score_id = local_score;
+
+    this->setCoefficients(tally_vals, local_score);
+
     if (norm_by_src_rate)
     {
       Real norm_factor = _openmc_problem.tallyMultiplier(global_score);
-      this->normalizeCoefficients(score_id, norm_factor)
+      this->normalizeCoefficients(score_id, norm_factor);
     }
     
 
-    return _first_moment;
+    return _first_moments.at(score_id);
 }
 
 void
 LegendreTally::normalizeCoefficients( unsigned int score_id, Real factor)
 {
-  for (size_t i = 0; i < _coefficients[score_id].size(); i++)
+  for (size_t i = 0; i < _coefficients.at(score_id).size(); i++)
   {
-    _coefficients[score_id].at(i) *= factor;
+    _coefficients.at(score_id).at(i) *= factor;
   }
-  _funcions[score_id]->setCoefficients(_coefficients);
+  _functions.at(score_id)->setCoefficients(_coefficients.at(score_id));
 }
 
-Real 
+void 
 LegendreTally::setCoefficients(std::vector<xt::xtensor<double, 1>> tally_vals, unsigned int score_id)
 { 
 
   std::size_t term = 0;
 
-  for (std::size_t i = 0; j < tally_vals[axis::x]; ++i)
+  for (std::size_t i = 0; i < tally_vals.at(0).size(); ++i)
     {
-      for (std::size_t j = 0; j < tally_vals[axis::y]; ++j)
+      for (std::size_t j = 0; j < tally_vals.at(1).size(); ++j)
       {
-        for (std::size_t k = 0; k < tally_vals[axis::z]; ++k, ++term)
+        for (std::size_t k = 0; k < tally_vals.at(2).size(); ++k, ++term)
         {
           //saves coefficient to term index in _coefficients
-          save(score_id, term, tally_vals[axis::x].at(i) 
-                    * tally_vals[axis::y].at(j) 
-                    * tally_vals[axis::z].at(k));
+          save(score_id, term, tally_vals.at(0)(i) 
+                             * tally_vals.at(1)(j) 
+                             * tally_vals.at(2)(k) );
         }
       }
     }
   // sends _coefficients to its function
-  _functions[score_id]->setCoefficients(_coefficients);
+  _functions.at(score_id)->setCoefficients(_coefficients.at(score_id));
 
-  _first_moment = _coefficients[0];
-  return _first_moment;
+  _first_moments.at(score_id) = _coefficients.at(score_id).at(0);
 }
 
-
-std::pair<unsigned, std::vector<openmc::Filter *>>
+std::pair<unsigned int, std::vector<openmc::SpatialLegendreFilter *>>
 LegendreTally::spatialLegendreFilter()
 {
     std::vector<openmc::SpatialLegendreFilter *> filters;
@@ -215,20 +226,36 @@ LegendreTally::spatialLegendreFilter()
         );
     };
 
-    setLegendreParams<axis::x>(filters[axis::x]);
-    setLegendreParams<axis::y>(filters[axis::y]);
-    setLegendreParams<axis::z>(filters[axis::z]);
+    setLegendreParams(openmc::LegendreAxis::x, filters.at(0));
+    setLegendreParams(openmc::LegendreAxis::y, filters.at(1));
+    setLegendreParams(openmc::LegendreAxis::z, filters.at(2));
 
     return std::make_pair(openmc::model::tally_filters.size() - 1, filters);
 }
 
-template <typename T>
 void
-LegendreTally::setLegendreParams(openmc::SpatialLegendreFilter * filter)
+LegendreTally::setLegendreParams(openmc::LegendreAxis axis, openmc::SpatialLegendreFilter * filter)
 {
-    filter->set_axis(T);
-    filter->set_minmax(_min(T), _max(T));
-    filter->set_order(_orders(T));
+    filter->set_axis(axis);
+    int dim;
+    switch (axis)
+    {
+    case openmc::LegendreAxis::x :
+      dim = 0;
+      break;
+    
+    case openmc::LegendreAxis::y :
+      dim = 1;
+      break;
+    
+    case openmc::LegendreAxis::z :
+      dim = 2;
+      break;
+    default:
+      mooseError("Unkown axis passed to setLegendreParams!");
+    }
+    filter->set_minmax(_min(dim), _max(dim));
+    filter->set_order(_orders.at(dim));
 }
 
 void
@@ -237,7 +264,7 @@ LegendreTally::save(unsigned score_id, size_t index, Real coefficient)
   
   if (index < _size && index >= 0)
   {
-    _coefficients[score_id].insert(index, coefficient);
+    _coefficients.at(score_id).at(index) = coefficient;
   }
   else mooseError("Hmm, something went wrong. The index trying to be saved is "
     + std::to_string(index) + " but the size of the coefficients vector is "
