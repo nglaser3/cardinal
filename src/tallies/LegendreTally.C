@@ -21,6 +21,8 @@
 
 #include "openmc/tallies/filter_sptl_legendre.h"
 
+registerMooseObject("CardinalApp", LegendreTally);
+
 InputParameters
 LegendreTally::validParams()
 {
