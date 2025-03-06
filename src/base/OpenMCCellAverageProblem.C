@@ -2154,6 +2154,15 @@ OpenMCCellAverageProblem::makeFunctionSeries(std::string name, std::string serie
     _params.set<std::vector<Real>>("physical_bounds") = bounds;
   }
 
+  if (series_type == "CylindricalDuo")
+  {
+    _params.set<MooseEnum>("series_type") = "CylindricalDuo";
+    _params.set<MooseEnum>("z") = "Legendre";
+    _params.set<MooseEnum>("disc") = "Zernike";
+    _params.set<std::vector<unsigned>>("orders") = orders;
+    _params.set<std::vector<Real>>("physical_bounds") = bounds;
+
+  }
   _params.set<MooseEnum>("expansion_type") = "orthonormal";
   
   addFunction("FunctionSeries", name, _params);
