@@ -12,6 +12,7 @@
     initial_properties = xml
     cell_level = 0
     check_tally_sum = false
+    normalize_by_global_tally = true
 
     [Tallies]
         [Zernike]
@@ -25,6 +26,25 @@
     []
 []
 
+
+[AuxVariables]
+  [kappa_fission]
+  []
+[]
+
+[AuxKernels]
+  [FunctionAux]
+    type = FunctionAux
+    variable = kappa_fission
+    function = kappa-fission_function
+  [../]
+[]
+
 [Executioner]
     type = Transient
+    num_steps = 5
+[]
+
+[Outputs]
+  exodus = true
 []
