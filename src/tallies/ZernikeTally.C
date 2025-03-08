@@ -43,12 +43,29 @@ _radius(getParam<Real>("radius")),
 _centroid(getParam<Point>("centroid")),
 _range(getParam<Real>("half_range"))
 {
+    //Verifying number of orders passed is correct
+    if (_orders.size() != getNumOrders()) 
+    mooseError("Cardinal only supports 3-D, the length of \"orders\" "
+              "for "+this->_name+" must be equal to "
+              +std::to_string(getNumOrders())+".");
+    
+    // initializing functions
+    for (int index; index < _tally_score.size(); ++index)
+    {
+      _functions.at(index) = this->getFunctionSeries(_tally_score.at(index) + _function_suffix);
+    }
 }
 
 std::pair<long unsigned int, std::vector<openmc::Filter *>> 
 ZernikeTally::spatialFilters()
 {
     std::vector<openmc::Filter*> filters;
+    //Legendre
+    auto * lfilter = dynamic_cast<openmc::SpatialLegendreFilter *>(openmc::Filter::create("spatiallegendre"));
+    lfilter->set_minmax(_centroid(2) - _range, _centroid(2) + _range);
+    lfilter->set_order(_orders.at(1));
+    lfilter->set_axis(openmc::LegendreAxis::z);
+    filters.push_back(static_cast<openmc::Filter *>(lfilter));
     //Zernike
     auto zfilter = dynamic_cast<openmc::ZernikeFilter *>(openmc::Filter::create("zernike"));
     zfilter->set_order(_orders.at(0));
@@ -56,34 +73,8 @@ ZernikeTally::spatialFilters()
     zfilter->set_y(_centroid(1));
     zfilter->set_r(_radius);
     filters.push_back(static_cast<openmc::Filter *>(zfilter));
-    //Legendre
-    auto * lfilter = dynamic_cast<openmc::SpatialLegendreFilter *>(openmc::Filter::create("spatiallegendre"));
-    lfilter->set_minmax(_centroid(2) - _range, _centroid(2) + _range);
-    lfilter->set_order(_orders.at(1));
-    lfilter->set_axis(openmc::LegendreAxis::z);
-    filters.push_back(static_cast<openmc::Filter *>(lfilter));
 
     return std::make_pair(openmc::model::tally_filters.size() - 2, filters);
-}
-
-void
-ZernikeTally::setCoefficients(std::vector<xt::xtensor<double, 1>> tally_vals,
-                              unsigned int score_id)
-{
-    std::size_t term = 0;
-
-
-    for (std::size_t Z = 0; Z < tally_vals.at(0).size(); ++Z)
-    {
-        for (std::size_t L = 0; L < tally_vals.at(1).size(); ++L, ++term)
-        {
-            //saves coefficient to term index in _coefficients
-            save(score_id, term, tally_vals.at(0)(Z) 
-                                * tally_vals.at(1)(L));
-        }
-    }
-  // sends _coefficients to its function
-  _functions.at(score_id)->setCoefficients(_coefficients.at(score_id));
 }
 
 FunctionSeries*
