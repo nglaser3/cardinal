@@ -31,8 +31,7 @@ FETallyBase::validParams()
     params.addParam<std::string>("function_suffix","_function",
                             "The suffix to append to the score as the name of the"
                             "function object holding the Legendre expansion.");
-    params.registerBase("FETally");
-    params.registerSystemAttributeName("FETally");
+    params.set<MultiMooseEnum>("output") = "UNRELAXED_TALLY";
     return params;
 }
 
@@ -52,29 +51,8 @@ FETallyBase::FETallyBase(const InputParameters & parameters)
     }
     _tally_name.clear();
 
-    //Verifying number of orders passed is correct
-    mooseAssert(_orders.size() == getNumOrders(), 
-              "Cardinal only supports 3-D, the length of \"orders\" "
-              "for "+this->_name+" must be equal to "
-              +std::to_string(getNumOrders())+".");
-
     // initializing number of functions and coefficients
     _functions.resize(_tally_score.size());
-    _coefficients.resize(_tally_score.size());
-
-    // getting number of terms for the coefficients
-    size_t _size = 1.;
-    for (int i = 0; i < _orders.size(); i++)
-    {
-        _size *= _orders.at(i);
-    }
-    
-    // initializing functions and coefficients
-    for (int index; index < _tally_score.size(); ++index)
-    {
-      _functions.at(index) = this->getFunctionSeries(_tally_score.at(index) + _function_suffix);
-      _coefficients.at(index) = std::vector<Real>(_size);
-    }
     
     /**
      * OpenMC spatial FETs only support the collision estimator
@@ -109,7 +87,7 @@ FETallyBase::initializeTally()
   _current_raw_tally_std_dev.resize(_tally_score.size());
   _previous_tally.resize(_tally_score.size());
 
-  auto [_filter_index, spatial_filters] = spatialFilters();
+  auto [_filter_index, spatial_filters] = this->spatialFilters();
 
   std::vector<openmc::Filter *> filters;
   for (auto & filter : _ext_filters)
@@ -147,11 +125,28 @@ FETallyBase::resetTally()
 
 void
 FETallyBase::computeSumAndMean()
-{
+{ 
+
   for (unsigned int score = 0; score < _tally_score.size(); ++score)
   {
+    auto openmc_coeffs = _openmc_problem.tallySum(_local_tally, score);
+
+    
+
+    _first_moments.at(score) = openmc_coeffs(0);
+
     _local_sum_tally[score] = _first_moments.at(score);
     _local_mean_tally[score] = _first_moments.at(score) / getVolume();
+
+    std::vector<Real> moose_coeffs;
+    for (std::size_t i = 0; i < openmc_coeffs.size(); i++)
+    {
+      moose_coeffs.push_back(openmc_coeffs(i));
+    }
+    
+    std::cout<<"First Moments:\t"<<openmc_coeffs(0)<<"\t"<<moose_coeffs[0]<<std::endl;
+
+    _functions[score]->setCoefficients(moose_coeffs);
   }
 }
 
@@ -162,48 +157,28 @@ FETallyBase::storeResultsInner(const std::vector<unsigned int> & var_numbers,
                                  std::vector<xt::xtensor<double, 1>> tally_vals,
                                  bool norm_by_src_rate)
 {
-  /**
-   * TODO: local_score to the index of the function
-   * to pass to the setCoefficients? 
-   * DONE: Don't care about var_numbers
-   * 
-   */
-    unsigned score_id = local_score;
-
-    this->setCoefficients(tally_vals, local_score);
 
     if (norm_by_src_rate)
     {
       Real norm_factor = _openmc_problem.tallyMultiplier(global_score);
-      this->normalizeCoefficients(score_id, norm_factor);
+      _first_moments.at(local_score) = this->normalizeCoefficients(local_score, norm_factor);
     }
 
-    _first_moments.at(score_id) = _coefficients.at(score_id).at(0);
-    
-    return this->_first_moments.at(score_id);
+    return this->_first_moments.at(local_score);
 }
 
-void
-FETallyBase::normalizeCoefficients( unsigned int score_id, Real factor)
+Real
+FETallyBase::normalizeCoefficients( unsigned int local_score, Real factor)
 {
-  for (size_t i = 0; i < _coefficients.at(score_id).size(); i++)
+  std::vector<Real> coeffs = _functions.at(local_score)->getCoefficients();
+  for (std::size_t i = 0; i < coeffs.size(); i++)
   {
-    _coefficients.at(score_id).at(i) *= factor;
+    coeffs.at(i) /= factor;
   }
-  _functions.at(score_id)->setCoefficients(_coefficients.at(score_id));
-}
-
-void
-FETallyBase::save(unsigned score_id, size_t index, Real coefficient)
-{
   
-  if (index < _size && index >= 0)
-  {
-    _coefficients.at(score_id).at(index) = coefficient;
-  }
-  else mooseError("Hmm, something went wrong. The index trying to be saved is "
-    + std::to_string(index) + " but the size of the coefficients vector is "
-    + std::to_string(_size) +".");
+  _functions.at(local_score)->setCoefficients(coeffs);
+
+  return coeffs.at(0);
 }
 
 #endif
