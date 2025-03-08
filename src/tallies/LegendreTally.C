@@ -40,6 +40,18 @@ LegendreTally::LegendreTally(const InputParameters & parameters)
   _min(getParam<Point>("minimum")),
   _max(getParam<Point>("maximum"))
 {
+  //Verifying number of orders passed is correct
+  if (_orders.size() != getNumOrders()) 
+    mooseError("Cardinal only supports 3-D, the length of \"orders\" "
+              "for "+this->_name+" must be equal to "
+              +std::to_string(getNumOrders())+".");
+  
+  // initializing functions
+  for (int index; index < _tally_score.size(); ++index)
+  {
+    _functions.at(index) = this->getFunctionSeries(_tally_score.at(index) + _function_suffix);
+  }
+
 }
 
 std::pair<long unsigned int, std::vector<openmc::Filter *>> 
@@ -58,29 +70,6 @@ LegendreTally::spatialFilters()
     }
 
     return std::make_pair(openmc::model::tally_filters.size() - 3, filters);
-}
-
-void 
-LegendreTally::setCoefficients(std::vector<xt::xtensor<double, 1>> tally_vals,
-                               unsigned int score_id)
-{
-    std::size_t term = 0;
-
-  for (std::size_t i = 0; i < tally_vals.at(0).size(); ++i)
-    {
-      for (std::size_t j = 0; j < tally_vals.at(1).size(); ++j)
-      {
-        for (std::size_t k = 0; k < tally_vals.at(2).size(); ++k, ++term)
-        {
-          //saves coefficient to term index in _coefficients
-          save(score_id, term, tally_vals.at(0)(i) 
-                             * tally_vals.at(1)(j) 
-                             * tally_vals.at(2)(k) );
-        }
-      }
-    }
-  // sends _coefficients to its function
-  _functions.at(score_id)->setCoefficients(_coefficients.at(score_id));
 }
 
 FunctionSeries*
