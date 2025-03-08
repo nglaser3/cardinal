@@ -2164,10 +2164,12 @@ OpenMCCellAverageProblem::makeFunctionSeries(std::string name, std::string serie
 
   }
   _params.set<MooseEnum>("expansion_type") = "orthonormal";
+  _params.set<bool>("print_when_set") = true;
   
   addFunction("FunctionSeries", name, _params);
 
-  return dynamic_cast<FunctionSeries*>(&getFunction(name));
+  auto function = dynamic_cast<FunctionSeries*>(&getFunction(name));
+  return function;
 }
 
 void
