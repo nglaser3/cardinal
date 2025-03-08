@@ -34,12 +34,9 @@ public:
 
 protected:
 
-    virtual void setCoefficients(std::vector<xt::xtensor<double, 1>> tally_vals,
-                                 unsigned int score_id) override;
-
     virtual FunctionSeries* getFunctionSeries(std::string name) override;
 
-    virtual int getNumOrders(){return 3;};
+    virtual int getNumOrders()override {return 3;};
 
     virtual Real getVolume() override {return 8.;};
 

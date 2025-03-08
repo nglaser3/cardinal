@@ -34,7 +34,7 @@ class FETallyBase : public TallyBase
 
         virtual void resetTally() override;
 
-        virtual void computeSumAndMean();
+        virtual void computeSumAndMean() override;
 
         virtual std::pair<unsigned int, openmc::Filter *> spatialFilter() override
         {return std::make_pair(0, nullptr);};
@@ -49,24 +49,16 @@ class FETallyBase : public TallyBase
                                        std::vector<xt::xtensor<double, 1>> tally_vals,
                                        bool norm_by_src_rate) override;
 
-        void normalizeCoefficients(unsigned int score_id, Real factor);
+        Real normalizeCoefficients(unsigned int score_id, Real factor);
 
-        virtual void setCoefficients(std::vector<xt::xtensor<double, 1>> tally_vals,
-                                     unsigned int score_id) = 0;
-
-        void save(unsigned score_id, size_t index, Real coefficient);
-
-        virtual FunctionSeries* getFunctionSeries(std::string name){return nullptr;};
+        virtual FunctionSeries* getFunctionSeries(std::string name) = 0;
 
         virtual int getNumOrders(){return 0;};
         virtual Real getVolume() = 0;
 
         std::vector<unsigned int> _orders;
 
-        size_t _size;
-
         std::vector<FunctionSeries*> _functions;
-        std::vector<std::vector<Real>> _coefficients;
         std::vector<Real> _first_moments;
 
         std::string _function_suffix;

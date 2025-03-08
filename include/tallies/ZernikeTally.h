@@ -35,14 +35,11 @@ public:
 
 protected:
 
-    virtual void setCoefficients(std::vector<xt::xtensor<double, 1>> tally_vals,
-        unsigned int score_id) override;
-
     virtual FunctionSeries* getFunctionSeries(std::string name) override;
 
-    virtual int getNumOrders(){return 2;};
+    virtual int getNumOrders() override {return 2;};
 
-    virtual Real getVolume() override {return 2 * libMesh::pi * std::pow(_radius, 2);};
+    virtual Real getVolume() override {return 2 * _range * libMesh::pi * std::pow(_radius, 2);};
 
     Real _radius;
 
