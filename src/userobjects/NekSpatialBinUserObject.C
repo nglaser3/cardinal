@@ -32,11 +32,9 @@ NekSpatialBinUserObject::validParams()
   params.addParam<unsigned int>(
       "interval",
       1,
-      "Frequency (in number of time steps) with which to execute this user object; "
-      "because Nek uses very small time steps, you need many time steps to reach "
-      "steady state, and user objects can be expensive and not necessary to evaluate "
-      "on every single time step. NOTE: you probably want to match this 'interval' "
-      "in the Output");
+      "Frequency (in number of time steps) with which to execute this user object; user objects "
+      "can be expensive and not necessary to evaluate on every single time step. NOTE: you "
+      "probably want to match with 'time_step_interval' in the Output");
   params.addParam<bool>(
       "map_space_by_qp",
       false,
@@ -203,13 +201,12 @@ NekSpatialBinUserObject::computeBinVolumes()
       if (_bin_counts[i] == 0)
       {
         std::string map = _map_space_by_qp ? "GLL points" : "element centroids";
-        mooseError("Failed to map any " + map + " to bin " + Moose::stringify(i) +
-                   "!\n\n"
-                   "This can happen if the bins are much finer than the NekRS mesh or if the bins "
-                   "are defined\n"
-                   "in a way that results in bins entirely outside the NekRS domain. You can turn "
-                   "this error\n"
-                   "off by setting 'check_zero_contributions = false'.");
+        mooseError(
+            "Failed to map any " + map + " to bin " + Moose::stringify(i) +
+            "!\n\n"
+            "This can happen if the bins are much finer than the NekRS mesh or if the bins are "
+            "defined in a way that results in bins entirely outside the NekRS domain. You can turn "
+            "this error off by setting 'check_zero_contributions = false' (at your own risk!).");
       }
     }
   }
