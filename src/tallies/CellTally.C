@@ -81,7 +81,7 @@ CellTally::CellTally(const InputParameters & parameters)
   }
 }
 
-std::pair<unsigned int, openmc::Filter *>
+std::pair<unsigned int, std::vector<openmc::Filter *>>
 CellTally::spatialFilter()
 {
   // Check to make sure we can map tallies to the mesh subdomains requested in tally_blocks.
@@ -99,7 +99,8 @@ CellTally::spatialFilter()
   _cell_filter = dynamic_cast<openmc::CellInstanceFilter *>(openmc::Filter::create("cellinstance"));
   _cell_filter->set_cell_instances(cells);
 
-  return std::make_pair(openmc::model::tally_filters.size() - 1, _cell_filter);
+  std::pair<unsigned int, std::vector<openmc::Filter *>> return_pair(openmc::model::tally_filters.size() - 1, {_cell_filter});
+  return return_pair;
 }
 
 Real

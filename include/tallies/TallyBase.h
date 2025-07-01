@@ -43,7 +43,7 @@ public:
    * @return a pair where the first entry is the filter index in the global filter array and the
    * second entry is the OpenMC filter
    */
-  virtual std::pair<unsigned int, openmc::Filter *> spatialFilter() = 0;
+  virtual std::pair<unsigned int, std::vector<openmc::Filter *>> spatialFilter() = 0;
 
   /**
    * A function to initialize the tally object. Override with care.

@@ -40,7 +40,7 @@ public:
    * @return a pair where the first entry is the filter index in the global filter array and the
    * second entry is an OpenMC unstructured mesh filter
    */
-  virtual std::pair<unsigned int, openmc::Filter *> spatialFilter() override;
+  virtual std::pair<unsigned int, std::vector<openmc::Filter *>> spatialFilter() override;
 
   /// A function to reset the tally. MeshTally overrides this function to delete the OpenMC mesh.
   virtual void resetTally() override;

@@ -35,7 +35,7 @@ public:
    * @return a pair where the first entry is the filter index in the global filter array and the
    * second entry is an OpenMC distributed cell filter
    */
-  virtual std::pair<unsigned int, openmc::Filter *> spatialFilter() override;
+  virtual std::pair<unsigned int, std::vector<openmc::Filter *>> spatialFilter() override;
 
   /**
    * A function to get the blocks associated with this CellTally.

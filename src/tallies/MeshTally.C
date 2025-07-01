@@ -149,7 +149,7 @@ MeshTally::MeshTally(const InputParameters & parameters)
     _tally_name = std::vector<std::string>();
 }
 
-std::pair<unsigned int, openmc::Filter *>
+std::pair<unsigned int, std::vector<openmc::Filter *>>
 MeshTally::spatialFilter()
 {
   // Create the OpenMC mesh which will be tallied on.
@@ -215,8 +215,8 @@ MeshTally::spatialFilter()
 
   // Validate the mesh filters to make sure we can run a copy transfer to the [Mesh].
   checkMeshTemplateAndTranslations();
-
-  return std::make_pair(openmc::model::tally_filters.size() - 1, _mesh_filter);
+  std::pair<unsigned int, std::vector<openmc::Filter *>> return_pair(openmc::model::tally_filters.size() - 1, {_mesh_filter});
+  return return_pair;
 }
 
 void
