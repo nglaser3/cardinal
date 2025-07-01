@@ -103,7 +103,7 @@ public:
    * @param[in] alpha the relaxation factor
    * @param[in] norm the normalization factor
    */
-  void relaxAndNormalizeTally(unsigned int local_score, const Real & alpha, const Real & norm);
+  virtual void relaxAndNormalizeTally(unsigned int local_score, const Real & alpha, const Real & norm);
 
   /**
    * Get the OpenMC tally that this object wraps.
