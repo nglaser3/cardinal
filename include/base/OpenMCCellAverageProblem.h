@@ -24,6 +24,7 @@
 /// Tally/filter includes.
 #include "TallyBase.h"
 #include "FilterBase.h"
+#include "FunctionSeries.h"
 
 #ifdef ENABLE_DAGMC
 #include "MoabSkinner.h"
@@ -103,6 +104,17 @@ public:
    * (to write into OpenMC cells), and density variable(s) (to write into OpenMC materials)
    */
   virtual void addExternalVariables() override;
+
+  /**
+   * Adds a functional expansion series function. Called by a child of FETallyBase.
+   * @param[in] name the name to give the function series
+   * @param[in] series_type the type of series to add ["Cartesian" or "CylindricalDuo"]
+   * @param[in] orders the orders to give the function series
+   * @param[in] bounds the physical bounds of the series
+   * @return pointer to the function series
+   */
+  FunctionSeries* makeFunctionSeries(std::string name, std::string series_type,
+                                     std::vector<unsigned int> orders, std::vector<Real> bounds);
 
   /**
    * Get the cell volume from a stochastic calculation

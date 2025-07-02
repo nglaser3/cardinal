@@ -106,15 +106,6 @@ FETallyBase::relaxAndNormalizeTally(unsigned int local_score,
   // TODO
 }
 
-FunctionSeries*
-FETallyBase::getFunctionSeries(std::string name)
-{
-  auto params = getFunctionParams();
-  _openmc_problem->addFunction("FunctionSeries", name, params);
-  auto function = dynamic_cast<FunctionSeries*>(&_openmc_problem->getFunction(name));
-  return function;
-}
-
 Real
 FETallyBase::storeResultsInner(const std::vector<unsigned int> & var_numbers,
                                  unsigned int local_score,
@@ -123,15 +114,15 @@ FETallyBase::storeResultsInner(const std::vector<unsigned int> & var_numbers,
                                  bool norm_by_src_rate)
 {
   Real total = 0.0;
+  auto num_bins = getNumBins();
   for (unsigned int ext = 0; ext < _num_ext_filter_bins; ++ext)
     {
-      auto xt_coeffs = xt::view(tally_vals[score],
+      auto xt_coeffs = xt::view(tally_vals[local_score],
                                 xt::range(ext * num_bins, ext * num_bins + num_bins));
       total += zerothMoment(xt_coeffs);
       std::vector<Real> coeffs(xt_coeffs.begin(), xt_coeffs.end());
-      _functions.at(score).at(ext)->setCoefficients(coeffs);
+      _functions.at(local_score).at(ext)->setCoefficients(coeffs);
     };
+    return total;
 }
-
-
 #endif

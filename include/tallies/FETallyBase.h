@@ -21,6 +21,9 @@
 #include "TallyBase.h"
 #include "OpenMCCellAverageProblem.h"
 #include "FunctionSeries.h"
+#include <vector>
+#include <string>
+#include <utility>
 
 class FETallyBase : public TallyBase
 {
@@ -42,9 +45,6 @@ class FETallyBase : public TallyBase
                                             const Real & norm) override;
 
     protected:
-
-        virtual FunctionSeries* getFunctionSeries(std::string name);
-
         virtual Real storeResultsInner(const std::vector<unsigned int> & var_numbers,
                                        unsigned int local_score,
                                        unsigned int global_score,
@@ -58,8 +58,6 @@ class FETallyBase : public TallyBase
 
         virtual int getNumSptlFilters() = 0;
 
-        virtual InputParameters getFunctionParams() = 0;
-
-        std::string _function_suffix
+        std::string _function_suffix;
         std::vector<std::vector<FunctionSeries*>> _functions;
 };
