@@ -2255,8 +2255,6 @@ OpenMCCellAverageProblem::makeFunctionSeries(std::string name, std::string serie
     {
       params.set<MooseEnum>(dim) = "Legendre";
     }
-    params.set<std::vector<unsigned int>>("orders") = orders;
-    params.set<std::vector<Real>>("physical_bounds") = bounds;
   }
 
   if (series_type == "CylindricalDuo")
@@ -2264,16 +2262,17 @@ OpenMCCellAverageProblem::makeFunctionSeries(std::string name, std::string serie
     params.set<MooseEnum>("series_type") = "CylindricalDuo";
     params.set<MooseEnum>("z") = "Legendre";
     params.set<MooseEnum>("disc") = "Zernike";
-    params.set<std::vector<unsigned>>("orders") = orders;
-    params.set<std::vector<Real>>("physical_bounds") = bounds;
-
   }
+
+  params.set<std::vector<unsigned int>>("orders") = orders;
+  params.set<std::vector<Real>>("physical_bounds") = bounds;
   params.set<MooseEnum>("expansion_type") = "orthonormal";
   params.set<bool>("print_when_set") = true;
   
   addFunction("FunctionSeries", name, params);
 
   auto function = dynamic_cast<FunctionSeries*>(&getFunction(name));
+  function->enforceSize(true);
   return function;
 }
 

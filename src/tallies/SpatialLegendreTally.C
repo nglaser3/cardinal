@@ -17,6 +17,9 @@
 /********************************************************************/
 
 #include "SpatialLegendreTally.h"
+#include <iostream>
+
+registerMooseObject("CardinalApp", SpatialLegendreTally);
 
 InputParameters
 SpatialLegendreTally::validParams()
@@ -35,17 +38,12 @@ SpatialLegendreTally::SpatialLegendreTally(const InputParameters & parameters)
    _max(getParam<Point>("upper_right"))
   {
 
+    _tally_name.clear();
+
     std::vector<Real> bounds{_min(0), _max(0), _min(1), _max(1), _min(2), _max(2)};
-    for (int i = 0; i < _functions.size(); i++)
-    {
-      for (int j = 0; j < _ext_filters.size(); j++)
-      {
-        std::string func_name = _tally_score.at(i) + "_" + _ext_filters.at(j)->name()
-                                + "_" + _function_suffix;
-        _functions.at(i).at(j) = _openmc_problem.makeFunctionSeries(func_name, "Cartesian",
-                                                                    _orders, bounds);
-      };
-    };
+    std::string func_name = _tally_score.at(0) + "_" + _function_suffix;
+    _function = _openmc_problem.makeFunctionSeries(func_name, "Cartesian", _orders, bounds);
+    std::cout<<"\n\n\n\n\033[92mCONSTRUCTOR\033[0m\n\n\n\n"<<std::endl;
   };
 
 std::pair<unsigned int, std::vector<openmc::Filter *>>
@@ -64,21 +62,6 @@ SpatialLegendreTally::spatialFilter()
     filter->set_minmax(_min(i), _max(i));
     filters.push_back(filter);
   }
+  std::cout<<"\n\n\n\n\033[92mSPTLFILTER\033[0m\n\n\n\n"<<std::endl;
   return std::make_pair(first_id, filters);
-};
-
-Real
-SpatialLegendreTally::zerothMoment(xt::xtensor<double, 1> coefficients)
-{
-  return coefficients.at(0) * (_max(0) - _min(0))
-                            * (_max(1) - _min(1))
-                            * (_max(2) - _min(2));
-};
-
-Real
-SpatialLegendreTally::firstMoment(xt::xtensor<double, 1> coefficients)
-{
-  return 2 * coefficients.at(1) / ( (_max(0) - _min(0))
-                                   *(_max(1) - _min(1))
-                                   *(_max(2) - _min(2)));
 };

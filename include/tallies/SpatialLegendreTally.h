@@ -35,9 +35,6 @@ class SpatialLegendreTally : public FETallyBase
 
     virtual int getNumBins() override {return _orders[0] * _orders[1] * _orders[2];};
 
-    virtual Real zerothMoment(xt::xtensor<double, 1> coefficients) override;
-    virtual Real firstMoment(xt::xtensor<double, 1> coefficients) override;
-
     virtual int getNumSptlFilters() override {return 3;};
 
     std::vector<unsigned> _orders;

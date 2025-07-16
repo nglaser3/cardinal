@@ -37,12 +37,9 @@ class FETallyBase : public TallyBase
 
         virtual void computeSumAndMean() override;
 
+        // passing down to derived classes
         virtual std::pair<unsigned int, std::vector<openmc::Filter *>> spatialFilter() override
         {return std::pair<unsigned int, std::vector<openmc::Filter *>>(0, {nullptr});};
-
-        virtual void relaxAndNormalizeTally(unsigned int local_score,
-                                            const Real & alpha,
-                                            const Real & norm) override;
 
     protected:
         virtual Real storeResultsInner(const std::vector<unsigned int> & var_numbers,
@@ -51,13 +48,12 @@ class FETallyBase : public TallyBase
                                        std::vector<xt::xtensor<double, 1>> tally_vals,
                                        bool norm_by_src_rate) override;
 
-        virtual int getNumBins() = 0;
+        std::pair<Real, Real> computeIntegral(FunctionSeries* function);
 
-        virtual Real zerothMoment(xt::xtensor<double, 1> coefficients) = 0;
-        virtual Real firstMoment(xt::xtensor<double, 1> coefficients) = 0;
+        virtual int getNumBins() = 0;
 
         virtual int getNumSptlFilters() = 0;
 
         std::string _function_suffix;
-        std::vector<std::vector<FunctionSeries*>> _functions;
+        FunctionSeries* _function;
 };
