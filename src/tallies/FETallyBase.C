@@ -75,6 +75,7 @@ FETallyBase::computeSumAndMean()
 { 
   for (unsigned int score = 0; score < _tally_score.size(); ++score)
   {
+    std::cout<<"\n\n\n\n\033[92mCOMPUTESUMANDMEAN\033[0m\n\n\n\n"<<std::endl;
     auto xt_coeffs = xt::view(_local_tally->results_,
                                  xt::all(),
                                  score,
@@ -94,6 +95,7 @@ FETallyBase::storeResultsInner(const std::vector<unsigned int> & var_numbers,
                                  std::vector<xt::xtensor<double, 1>> tally_vals,
                                  bool norm_by_src_rate)
 {
+  std::cout<<"\n\n\n\n\033[92mSTORESRESULTSINNER\033[0m\n\n\n\n"<<std::endl;
   Real total = 0.0;
   auto xt_coeffs = xt::view(_local_tally->results_,
                             xt::all(),
@@ -107,6 +109,37 @@ FETallyBase::storeResultsInner(const std::vector<unsigned int> & var_numbers,
 std::pair<Real, Real>
 FETallyBase::computeIntegral(FunctionSeries* function)
 {
-  return std::make_pair(0.0, 0.0);
+  // Setup quadrature rule for integrating
+  auto _fe = FEBase::build(3, FEType(1, FEFamily::LAGRANGE));
+  auto _qr = QBase::build(QuadratureType::QGAUSS, 3, Order::TWENTIETH);
+  _fe->attach_quadrature_rule(_qr.get());
+
+  // grab the points and weights for integration
+  const std::vector<Point> & points = _fe->get_xyz();
+  const std::vector<Real> & weights = _fe->get_JxW();
+
+  Real integral_value = 0.0;
+  Real volume = 0;
+  for(const auto * elem : _openmc_problem.getMooseMesh().getMesh().active_local_element_ptr_range())
+  {
+    /**
+     * need to reinit the element, otherwise the points and weights are meaningless.
+     * libMesh::FEBase::reinit(elem) operates on the points and weights vector, 
+     * filling them with the correct points and weights for the current element
+     */
+    _fe->reinit(elem);
+    for (unsigned int i = 0; i < points.size(); i++)
+    {
+      integral_value += weights[i] * function->evaluateValue(0.0, points[i]);
+    }
+    volume += elem->volume();
+  }
+
+  // bring everything back together after done from mpi (?) 
+  const auto & comm = _openmc_problem.comm();
+  comm.sum(integral_value);
+  comm.sum(volume);
+
+  return std::make_pair(integral_value, volume);
 }
 #endif
