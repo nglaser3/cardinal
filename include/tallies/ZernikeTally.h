@@ -33,12 +33,13 @@ class ZernikeTally : public FETallyBase
 
   protected:
 
-    virtual int getNumBins() override;
+    virtual int getNumBins() override
+    {return ((_orders[0] + 1) * (_orders[0] + 2)) / 2 * (_orders[1] + 1);}
 
     virtual int getNumSptlFilters() override {return 2;}
 
     std::vector<unsigned> _orders;
+    const Real & _radius;
     const Point & _centroid;
-    const Real & _z_min;
     const Real & _z_max;
 };
