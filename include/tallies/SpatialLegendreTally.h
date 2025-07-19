@@ -33,9 +33,9 @@ class SpatialLegendreTally : public FETallyBase
 
   protected:
 
-    virtual int getNumBins() override {return _orders[0] * _orders[1] * _orders[2];};
+    virtual int getNumBins() override {return (_orders[0] + 1) * (_orders[1] + 1) * (_orders[2] + 1);}
 
-    virtual int getNumSptlFilters() override {return 3;};
+    virtual int getNumSptlFilters() override {return 3;}
 
     std::vector<unsigned> _orders;
     const Point & _min;

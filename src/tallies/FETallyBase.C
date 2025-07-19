@@ -75,11 +75,11 @@ FETallyBase::computeSumAndMean()
 { 
   for (unsigned int score = 0; score < _tally_score.size(); ++score)
   {
-    std::cout<<"\n\n\n\n\033[92mCOMPUTESUMANDMEAN\033[0m\n\n\n\n"<<std::endl;
     auto xt_coeffs = xt::view(_local_tally->results_,
                                  xt::all(),
                                  score,
                                  static_cast<int>(openmc::TallyResult::SUM));
+    xt_coeffs /= _local_tally->n_realizations_;
     std::vector<Real> coeffs(xt_coeffs.begin(), xt_coeffs.end());
     _function->setCoefficients(coeffs);
     auto [integral, volume] = computeIntegral(_function);
@@ -95,7 +95,6 @@ FETallyBase::storeResultsInner(const std::vector<unsigned int> & var_numbers,
                                  std::vector<xt::xtensor<double, 1>> tally_vals,
                                  bool norm_by_src_rate)
 {
-  std::cout<<"\n\n\n\n\033[92mSTORESRESULTSINNER\033[0m\n\n\n\n"<<std::endl;
   Real total = 0.0;
   auto xt_coeffs = xt::view(_local_tally->results_,
                             xt::all(),
